@@ -1,5 +1,6 @@
 import streamlit as st
 from utils.jd_analyzer_llm import analyze_jd
+from utils.rate_limiter import guard, consume
 
 
 def render():
@@ -30,11 +31,12 @@ def render():
     if st.button("🔍  Phân tích ngay", use_container_width=True, disabled=not jd_text.strip()):
         if not jd_text.strip():
             st.warning("Vui lòng dán nội dung tin tuyển dụng trước.")
-        else:
+        elif guard("jd_analyze"):
             with st.spinner("AI đang phân tích tin tuyển dụng..."):
                 try:
                     cv_text = st.session_state.get("cv_text", "")
-                    result = analyze_jd(jd_text=jd_text, cv_text=cv_text)
+                    result = analyze_jd(jd_text=jd_text[:8000], cv_text=cv_text)
+                    consume("jd_analyze")
                     st.session_state.jd_result = result
                     st.session_state.jd_text_saved = jd_text
                 except Exception:

@@ -2,6 +2,7 @@ import streamlit as st
 import io
 from docx import Document
 from utils.cover_letter_llm import generate_cover_letter
+from utils.rate_limiter import guard, consume
 
 
 def _to_docx(text: str) -> bytes:
@@ -59,19 +60,21 @@ def render():
     can_generate = bool(vi_tri.strip() and cong_ty.strip() and cv_text.strip())
 
     if st.button("✍️  Viết thư xin việc", use_container_width=True, disabled=not can_generate):
-        with st.spinner("AI đang viết thư cho bạn..."):
-            try:
-                letter = generate_cover_letter(
-                    vi_tri=vi_tri,
-                    cong_ty=cong_ty,
-                    nguoi_nhan=nguoi_nhan,
-                    cv_text=cv_text,
-                    jd_text=jd_text,
-                )
-                st.session_state.cover_letter = letter
-                st.session_state.cover_letter_meta = {"vi_tri": vi_tri, "cong_ty": cong_ty}
-            except Exception:
-                st.error("Tạo thư thất bại. Vui lòng thử lại.")
+        if guard("cover_letter"):
+            with st.spinner("AI đang viết thư cho bạn..."):
+                try:
+                    letter = generate_cover_letter(
+                        vi_tri=vi_tri,
+                        cong_ty=cong_ty,
+                        nguoi_nhan=nguoi_nhan,
+                        cv_text=cv_text,
+                        jd_text=jd_text,
+                    )
+                    consume("cover_letter")
+                    st.session_state.cover_letter = letter
+                    st.session_state.cover_letter_meta = {"vi_tri": vi_tri, "cong_ty": cong_ty}
+                except Exception:
+                    st.error("Tạo thư thất bại. Vui lòng thử lại.")
 
     if not can_generate and not vi_tri.strip():
         st.caption("* Vui lòng điền Vị trí ứng tuyển, Tên công ty và thông tin CV.")

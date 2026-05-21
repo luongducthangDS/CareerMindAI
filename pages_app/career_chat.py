@@ -1,5 +1,6 @@
 import streamlit as st
 from utils.llm_client import chat
+from utils.rate_limiter import guard, consume
 
 SYSTEM = """Bạn là chuyên gia tư vấn nghề nghiệp IT tại Việt Nam với 10 năm kinh nghiệm.
 Bạn am hiểu thị trường tuyển dụng IT Việt Nam, mức lương, lộ trình sự nghiệp, kỹ năng cần có.
@@ -66,6 +67,9 @@ def render():
 
 
 def _get_reply(user_msg: str) -> str:
+    if not guard("chat"):
+        return "Bạn đã đạt giới hạn tin nhắn trong phiên này. Vui lòng tải lại trang để tiếp tục."
+
     history = st.session_state.chat_history
     messages_for_context = history[-8:]  # last 4 exchanges
 
@@ -77,6 +81,8 @@ def _get_reply(user_msg: str) -> str:
 
     prompt = f"{context}Người dùng: {user_msg}"
     try:
-        return chat(prompt=prompt, system=SYSTEM, provider="groq")
+        reply = chat(prompt=prompt, system=SYSTEM, provider="groq")
+        consume("chat")
+        return reply
     except Exception:
         return "Xin lỗi, tôi đang gặp sự cố kỹ thuật. Vui lòng thử lại sau ít phút."

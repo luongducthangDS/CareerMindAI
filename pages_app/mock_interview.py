@@ -1,5 +1,6 @@
 import streamlit as st
 from utils.interview_llm import generate_questions, evaluate_answer
+from utils.rate_limiter import guard, consume
 
 LEVELS = ["Junior (0–2 năm)", "Mid-level (2–4 năm)", "Senior (4+ năm)"]
 TYPES = ["Kỹ thuật (Technical)", "Hành vi (Behavioral)", "Kết hợp (Mixed)"]
@@ -37,22 +38,24 @@ def render():
         so_cau = st.slider("Số câu hỏi", min_value=3, max_value=10, value=5)
 
         if st.button("🚀  Bắt đầu phỏng vấn", use_container_width=True, disabled=not role.strip()):
-            with st.spinner("AI đang chuẩn bị câu hỏi..."):
-                try:
-                    questions = generate_questions(
-                        vi_tri=role,
-                        level=level,
-                        loai=interview_type,
-                        so_cau=so_cau,
-                    )
-                    st.session_state.interview_questions = questions
-                    st.session_state.interview_role = role
-                    st.session_state.interview_idx = 0
-                    st.session_state.interview_answers = []
-                    st.session_state.interview_evals = []
-                    st.rerun()
-                except Exception:
-                    st.error("Không tạo được câu hỏi. Vui lòng thử lại.")
+            if guard("interview_gen"):
+                with st.spinner("AI đang chuẩn bị câu hỏi..."):
+                    try:
+                        questions = generate_questions(
+                            vi_tri=role,
+                            level=level,
+                            loai=interview_type,
+                            so_cau=so_cau,
+                        )
+                        consume("interview_gen")
+                        st.session_state.interview_questions = questions
+                        st.session_state.interview_role = role
+                        st.session_state.interview_idx = 0
+                        st.session_state.interview_answers = []
+                        st.session_state.interview_evals = []
+                        st.rerun()
+                    except Exception:
+                        st.error("Không tạo được câu hỏi. Vui lòng thử lại.")
         return
 
     # ── In progress ──────────────────────────────────────────────────────────

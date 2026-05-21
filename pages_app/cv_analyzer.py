@@ -3,6 +3,7 @@ import uuid
 from utils.document_parser import parse_uploaded_file
 from utils.cv_analyzer import analyze_cv
 from utils.vector_store import save_cv
+from utils.rate_limiter import guard, consume
 
 ROLE_OPTIONS = [
     "Kỹ sư AI / Machine Learning",
@@ -82,6 +83,8 @@ def render():
         st.markdown("#### Bước 3 — Nhận phân tích từ AI")
 
         if st.button("🔍  Phân tích CV ngay", use_container_width=True):
+            if not guard("cv_analyze"):
+                return
             with st.spinner("AI đang phân tích CV của bạn... Thường mất 15–30 giây."):
                 try:
                     analysis = analyze_cv(
@@ -92,6 +95,7 @@ def render():
                     st.session_state.cv_analysis = analysis
                     st.session_state.analysis_role = target_role_vn
 
+                    consume("cv_analyze")
                     save_cv(
                         session_id=str(uuid.uuid4()),
                         cv_text=st.session_state.cv_text,

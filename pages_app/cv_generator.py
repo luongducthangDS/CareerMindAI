@@ -1,6 +1,7 @@
 import streamlit as st
 from utils.cv_generator_llm import enhance_cv
 from utils.docx_exporter import export_cv_docx
+from utils.rate_limiter import guard, consume
 
 
 def _init_state():
@@ -168,10 +169,11 @@ def render():
         if st.button("✨  AI cải thiện nội dung", use_container_width=True, help="AI sẽ viết lại summary và bullet points chuyên nghiệp hơn"):
             if not d["ho_ten"] or not d["chuc_danh"]:
                 st.warning("Vui lòng điền ít nhất Họ tên và Vị trí ứng tuyển.")
-            else:
+            elif guard("cv_enhance"):
                 with st.spinner("AI đang cải thiện ngôn từ CV..."):
                     try:
                         enhanced = enhance_cv(d, d["chuc_danh"])
+                        consume("cv_enhance")
                         st.session_state.cv_gen.update(enhanced)
                         st.success("✅ Đã cải thiện! Kiểm tra lại các tab rồi tải về.")
                         st.rerun()
