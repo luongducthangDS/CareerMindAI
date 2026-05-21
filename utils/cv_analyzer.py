@@ -1,38 +1,70 @@
 from utils.llm_client import chat
 
-SYSTEM_PROMPT = """You are an expert career advisor and technical recruiter specializing in AI Engineering and Software Engineering roles.
-Analyze CVs with the eye of a senior hiring manager at top tech companies.
-Always respond in the same language as the CV content. If the CV is in Vietnamese, respond in Vietnamese. If English, respond in English.
-Be specific, actionable, and honest."""
+SYSTEM_PROMPT = """Bạn là kỹ sư tuyển dụng cấp cao tại một công ty công nghệ hàng đầu (Google, Meta, Shopee, VNG cấp độ).
+Bạn xem xét hàng trăm CV mỗi tuần và chỉ chọn những hồ sơ thực sự nổi bật.
 
-ANALYSIS_PROMPT = """Analyze the following CV and provide a comprehensive evaluation.
+Nguyên tắc đánh giá:
+- Khắt khe, thẳng thắn — không khen chung chung, không an ủi vô nghĩa
+- Phần lớn CV đến tay bạn đều có vấn đề: mơ hồ, thiếu số liệu, sáo rỗng
+- Điểm số phản ánh thực tế: CV trung bình của sinh viên/fresher thường 30–55/100
+- Chỉ ra chính xác câu/cụm từ nào trong CV đang yếu và tại sao
+- Gợi ý cải thiện phải cụ thể, có thể thực hiện ngay — không nói chung chung
+- LUÔN trả lời bằng tiếng Việt, bất kể CV viết bằng ngôn ngữ nào"""
 
-CV CONTENT:
+ANALYSIS_PROMPT = """Phân tích CV sau cho vị trí: {target_role}
+
+---
 {cv_text}
+---
 
-TARGET ROLE: {target_role}
+Trả lời theo đúng cấu trúc bên dưới, bằng tiếng Việt:
 
-Provide your analysis in the following structured format:
+## 📊 Điểm tổng thể: [X/100]
+Giải thích ngắn gọn tại sao cho điểm này. Đừng ngại cho điểm thấp nếu CV thực sự yếu.
 
-## 📊 Overall Score: [X/100]
+**Thang điểm tham khảo:**
+- 80–100: CV xuất sắc, nổi bật ngay lập tức
+- 60–79: Khá tốt, cần chỉnh một số điểm
+- 40–59: Trung bình, nhiều điểm cần cải thiện
+- Dưới 40: Yếu, cần làm lại gần như toàn bộ
 
-## ✅ Strengths
-List 3-5 specific strengths with brief explanations.
+---
 
-## ⚠️ Weaknesses
-List 3-5 specific weaknesses or gaps.
+## ✅ Điểm mạnh (chỉ liệt kê nếu thực sự nổi bật)
+Tối đa 4 điểm. Nếu không có điểm mạnh thực sự, ghi thẳng "CV chưa có điểm mạnh đáng kể".
+Mỗi điểm: trích dẫn cụ thể từ CV → lý do đây là điểm tốt.
 
-## 🎯 Improvement Suggestions
-List 5-7 concrete, actionable improvements ranked by priority.
+---
 
-## 🔑 Keywords Missing
-List important keywords/skills missing for the target role that ATS systems look for.
+## ❌ Điểm yếu & Vấn đề nghiêm trọng
+Liệt kê 4–7 vấn đề, ưu tiên từ nghiêm trọng nhất. Với mỗi vấn đề:
+- **Vấn đề:** [tên vấn đề ngắn gọn]
+- **Dẫn chứng:** trích câu/phần cụ thể trong CV đang mắc lỗi này
+- **Tại sao đây là vấn đề:** giải thích ngắn từ góc nhìn nhà tuyển dụng
 
-## 💡 Quick Wins
-List 2-3 changes that would immediately improve this CV's impact.
+Các vấn đề phổ biến cần kiểm tra: thiếu số liệu/kết quả cụ thể, dùng từ sáo rỗng ("nhiệt tình", "chăm chỉ"), mô tả nhiệm vụ thay vì thành tích, format lộn xộn, thiếu từ khóa ATS, kinh nghiệm không liên quan chiếm quá nhiều chỗ.
 
-## 📈 Match Score for {target_role}: [X%]
-Brief explanation of the match score.
+---
+
+## 🎯 Gợi ý cải thiện (ưu tiên theo thứ tự tác động)
+6–8 gợi ý cụ thể. Mỗi gợi ý phải có:
+- **Làm gì:** hành động cụ thể
+- **Ví dụ thực tế:** nếu có thể, viết lại mẫu câu trước → sau
+
+---
+
+## 🔑 Từ khóa ATS còn thiếu
+Liệt kê 5–10 từ khóa/kỹ năng quan trọng cho vị trí {target_role} mà CV hiện chưa đề cập hoặc đề cập quá ít. Recruiter và hệ thống ATS sẽ tìm những từ này.
+
+---
+
+## ⚡ 3 việc cần làm NGAY trong 30 phút
+Ba thay đổi đơn giản nhất, tác động lớn nhất — có thể thực hiện ngay hôm nay.
+
+---
+
+## 📈 Mức độ phù hợp với {target_role}: [X%]
+Đánh giá thẳng thắn: CV này có được mời phỏng vấn không? Tại sao có hoặc không?
 """
 
 
